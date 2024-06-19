@@ -1,0 +1,112 @@
+//Kod.gs
+// Global Variables
+const ss = SpreadsheetApp.getActiveSpreadsheet();
+const mainSheet = ss.getSheetByName('Main')
+
+// Users Database Access
+const corona_cherie71 = ss.getSheetByName('corona_cherie71@gmail.com')
+const hardy_mckenna75 = ss.getSheetByName('hardy_mckenna75@gmail.com')
+const hutton_sebastian86 = ss.getSheetByName('hutton_sebastian86@gmail.com')
+console.log(corona_cherie71)
+
+//Todays Date to find the proper index in date List 
+const date = new Date()
+const year = date.getFullYear()
+const month = `0${date.getMonth() + 1}`
+const day = date.getDate()
+const dateString = `${month}.${day}.${year}`
+
+
+
+// HTML live server
+function doGet() {
+  return HtmlService.createTemplateFromFile('index').evaluate();
+}
+
+// Including JavaScript DOM file
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile('app_server')
+      .getContent();
+}
+
+// Getting all the Users from Database | Getting Email of the User | Sending to front-end
+function getAgentsList() {
+
+  let agentsNumber = mainSheet.getLastRow()
+  i = 1;
+  const agentsList = mainSheet.getRange(2, 1 ,agentsNumber - 1, 1).getValues()
+  console.log(mainSheet.getRange(2, 1 ,agentsNumber - 1, 1).getValues())
+
+  const activeAgent = Session.getActiveUser().getEmail();
+  console.log(activeAgent)
+  return JSON.stringify({activeAgent, agentsList: agentsList})
+}
+
+// Getting Data to Login User
+function sendUsersDataToInterface() {
+  const greetings = 'hello from server side!'
+  const userDatabase = ss.getSheetByName(`${Session.getActiveUser().getEmail()}`).getName()
+  return JSON.stringify( {userDatabase} )
+
+}
+
+// Connecting DataBase With Logged User
+function connectUserToDatabase() {
+  const greetings = 'hello from server side!'
+  const activeAgent = Session.getActiveUser().getEmail();
+  ss.getSheetByName(`${activeAgent}`)
+  return JSON.stringify( {greetings} )
+}
+
+
+// Passing Time Duration Of Extra Activity To User's Database
+function passSentTimeDuration(counter, buttonName) {
+   const userDatabase = ss.getSheetByName(`${Session.getActiveUser().getEmail()}`)
+   const listOfAllDatesInMonth = userDatabase.getRange(2,1,31,1).getValues().flat()
+   let listOfExtraActivities = userDatabase.getRange(1,2,1, 20).getValues().flat()
+   console.log(listOfExtraActivities.flat())
+
+   
+   let row = listOfAllDatesInMonth.indexOf(dateString)
+   let column = listOfExtraActivities.indexOf(buttonName);
+   column += 2
+   row += 2
+   console.log(row)
+
+
+   //console.log(indexOfDate)
+  //console.log(counter)
+ userDatabase.getRange(row, column).setValue(counter)
+}
+
+function passExtraActivityAsTitleToDatabase(buttonName) {
+  const userDatabase = ss.getSheetByName(`${Session.getActiveUser().getEmail()}`)
+  let listOfExtraActivities = userDatabase.getRange(1,2,1, 20).getValues()[0]
+ 
+  let fullCellsOfExtraAtivities = listOfExtraActivities.filter(extraActivity => extraActivity.toString().length > 0)
+  //console.log(fullCellsOfExtraAtivities[0])
+
+  if(fullCellsOfExtraAtivities.includes(buttonName)) {
+    let row = 2;
+    let column = fullCellsOfExtraAtivities.indexOf(buttonName) + 2
+    userDatabase.getRange(row, column).setValue('true')
+  } else {
+    fullCellsOfExtraAtivities.push(buttonName)
+    let row = 1;
+    let column = fullCellsOfExtraAtivities.indexOf(buttonName) + 2
+    userDatabase.getRange(row, column).setValue(buttonName)
+
+    row += 1
+    userDatabase.getRange(row, column).setValue('true 2')
+
+  }
+
+  //fullCellsOfExtraAtivities.forEach(extraActivity => {
+    //console.log(extraActivity)
+    //if(extraActivity == buttonName) {
+      //userDatabase.getRange('B2').setValue('true')
+    //} else (
+     // userDatabase.getRange('B2').setValue('false')
+   // )
+  //})
+}
