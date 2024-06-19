@@ -1,0 +1,169 @@
+<script>
+
+  // HTML Variables
+  let agentPicker = document.getElementById('agent_picker');
+  console.log(1)
+
+  // insert list of users in select tag
+  function getUsersList() {
+    google.script.run.withSuccessHandler(data => {
+
+      // Variables Used To Choose aAgent In The Select Login Input
+      const parsedAgentsList = JSON.parse(data).agentsList
+      const parsedAgentsListLength = parsedAgentsList.length
+      const parsedactiveAgent = JSON.parse(data).activeAgent
+      const users = document.getElementById("agent_picker");
+
+      for(let j = 0; j < parsedAgentsListLength; j++) {
+        //console.log(parsedAgentsList[j][0])
+        //let agentHTMLOptionTag = document.createElement("Option")
+        //agentPicker.appendChild(agentHTMLOptionTag);
+        //agentHTMLOptionTag.innerHTML = parsedAgentsList[j][0]
+        //agentHTMLOptionTag.setAttribute('id', `${agentHTMLOptionTag.innerHTML = parsedAgentsList[j][0]}`)
+      }
+
+      // User Log In and Allow The User To Take Actions
+      let i;
+      for(i=0; i < parsedAgentsListLength; i++) {
+        console.log(parsedAgentsList[i][0])
+        if (parsedactiveAgent == parsedAgentsList[i][0]) {
+          let agentHTMLOptionTag = document.createElement("Option")
+          agentPicker.appendChild(agentHTMLOptionTag);
+          agentHTMLOptionTag.innerHTML = parsedAgentsList[i][0]
+          agentHTMLOptionTag.setAttribute('id', `${agentHTMLOptionTag.innerHTML = parsedAgentsList[i][0]}`)
+
+          //logInTheUserToDatabase()
+          requestuserDatabaseAccess()
+
+          console.log(agentHTMLOptionTag)
+          //console.log(users[i])
+          agentHTMLOptionTag.setAttribute('selected', 'selected')
+          buttonsActionsAvailable()
+        }  
+      }
+
+      console.log(parsedAgentsList)
+
+    }).withFailureHandler ( er => {
+      alert('error')
+    }).getAgentsList()
+
+    //function logInTheUserToDatabase() {
+      //google.script.run.connectUserToDatabase()
+
+      //google.script.run.withSuccessHandler(data => {
+        //.log(JSON.parse(data).greetings)
+      //}).connectUserToDatabase()
+    //}
+
+
+    console.log(agentPicker)
+  }
+  getUsersList()
+
+
+
+  //Get Data From Database After Log In The user
+  function requestuserDatabaseAccess() {
+    google.script.run.sendUsersDataToInterface()
+    
+    google.script.run.withSuccessHandler(data => {
+      console.log(JSON.parse(data).userDatabase)
+    }).sendUsersDataToInterface()
+  }
+
+  function buttonsActionsAvailable() {
+    // Catch all buttons in a list
+    const buttonsTask = document.querySelectorAll('.task_button');
+
+    // Timer function for all the buttons
+    let counter = 0
+    let interval = null
+
+    function timer(buttonName) {
+      counter += 1
+      //console.log(counter)
+      if(counter % 10 === 0) {
+        console.log(counter)
+        console.log(buttonName)
+
+        google.script.run.withSuccessHandler().passSentTimeDuration(counter, buttonName)
+      }
+    }
+
+    function start(buttonName) {
+      if(interval) {
+        return;
+      }
+      console.log(buttonName)
+      google.script.run.withSuccessHandler().passExtraActivityAsTitleToDatabase(buttonName)
+      interval = setInterval(timer, 1000, buttonName)
+    }
+
+    function stop() {
+      clearInterval(interval)
+      interval = null
+    }
+
+    function reset() {
+      stop()
+      counter = 0
+    }
+
+    // Safe Time Duration of Extra Activity Sending To The Server
+    //function sendAndGetSafeTimeDurationToServer(counter) {
+    //  console.log(counter)
+    //  google.script.run.withSuccessHandler().passSentTimeDuration(counter)
+    //}
+    
+    //iterate buttons 
+    buttonsTask.forEach(buttonTask => {
+
+      buttonTask.addEventListener('click', function() {
+        console.log(buttonTask)
+        let buttonName = buttonTask.innerHTML
+
+        // Main Button Actions To Start Running Timer For Agents 
+        if(buttonTask.hasAttribute('active') == false) {
+
+          buttonTask.setAttribute('active', 'true')
+          let disabledButtons = Array.from(buttonsTask)
+          let unactiveButtons = disabledButtons.filter(filterDisabledButton)
+
+          function filterDisabledButton(disabledButton) {
+            return disabledButton.hasAttribute('active') == false
+          }
+
+          unactiveButtons.forEach(unactiveButton => {
+            unactiveButton.disabled = true
+            unactiveButton.classList.add('task_button_unactive')
+            unactiveButton.classList.remove('task_button:hover')
+          })
+          buttonTask.classList.add('task_button_active')
+          start(buttonName)
+          console.log(counter)
+
+        } 
+        else {
+          buttonTask.removeAttribute('active')
+          buttonsTask.forEach( buttonTask => {
+            buttonTask.disabled = false
+            buttonTask.classList.remove('task_button_unactive')
+          })
+          buttonTask.classList.remove('task_button_active')
+          console.log(counter)
+          reset()
+          console.log('reset button')
+        }
+        
+      })
+
+    })
+  }
+
+
+
+
+
+
+</script>
